@@ -118,7 +118,7 @@ docker-compose up --build
 ## Images Docker Hub
 
 ```bash
-docker pull votre_username/projet11-streamlit:latest
+docker pull quantumspider777/projet11-streamlit:latest
 ```
 
 ---
