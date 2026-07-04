@@ -1,14 +1,15 @@
 """
-Projet 11 - Téléchargement automatique du modèle
-Ce fichier est exécuté au démarrage de l'app Streamlit
-Il télécharge best_model.pkl et tfidf_vectorizer.pkl depuis Google Drive
+Projet 11 - Telechargement automatique du modele
+Ce fichier est execute au demarrage de l'app Streamlit
+Il telecharge best_model.pkl et tfidf_vectorizer.pkl depuis Google Drive
 """
 
 import os
 from pathlib import Path
 
-MODEL_FILE_ID = "https://drive.google.com/file/d/1Uz5OWnaq0YNuB-sPX54HKsYa-Cyx_A-h/view?usp=sharing"
-TFIDF_FILE_ID = "https://drive.google.com/file/d/1enUkbrp1GeLTREt9i0LDBhlfl8wpszJY/view?usp=sharing"
+# Uniquement l'ID, pas le lien complet
+MODEL_FILE_ID = "1Uz5OWnaq0YNuB-sPX54HKsYa-Cyx_A-h"
+TFIDF_FILE_ID = "1enUkbrp1GeLTREt9i0LDBhlfl8wpszJY"
 
 def download_models():
     models_dir = Path("models")
