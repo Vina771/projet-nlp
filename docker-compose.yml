@@ -1,0 +1,80 @@
+version: "3.9"
+
+# =============================================================
+# Projet 11 - Analyse des Discours Politiques
+# Orchestration Docker Compose
+#
+# Modes d'utilisation :
+#
+#   BUILD local (dev) :
+#     docker-compose up --build
+#
+#   PULL depuis Docker Hub (prod/rendu) :
+#     docker-compose -f docker-compose.hub.yml up
+#
+# Services :
+#   API FastAPI   -> http://localhost:8000
+#   Docs API      -> http://localhost:8000/docs
+#   Streamlit     -> http://localhost:8501
+#   MLflow UI     -> http://localhost:5000
+# =============================================================
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: quantumspider777/projet11-api:latest
+    container_name: projet11_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    image: quantumspider777/projet11-streamlit:latest
+    container_name: projet11_streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./models:/app/models:ro
+      - ./outputs:/app/outputs:ro
+      - ./reports:/app/reports:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mlflow:
+    image: python:3.11-slim
+    container_name: projet11_mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+    command: >
+      bash -c "pip install mlflow --quiet &&
+               mlflow ui --host 0.0.0.0 --port 5000
+               --backend-store-uri /mlruns"
+    restart: unless-stopped
+
+networks:
+  default:
+    name: projet11_network

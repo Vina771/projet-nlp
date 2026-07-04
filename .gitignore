@@ -1,0 +1,39 @@
+@"
+# Donnees brutes
+DS1/
+DS2/
+DS3/
+
+# CSV nettoyés
+outputs/*.csv
+
+# Modeles
+models/*.pkl
+models/*.joblib
+
+# MLflow
+mlruns/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Env
+.env
+"@ | Out-File -FilePath .gitignore -Encoding utf8
