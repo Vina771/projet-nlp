@@ -22,11 +22,33 @@ Analyse de sentiment sur des tweets politiques. Modèle entraîné sur 1,695,833
 
 ## Datasets
 
-| Dataset | Source Kaggle | Tweets | Domaine |
-|---|---|---|---|
-| DS1 | Global Political Tweets (kaushiksuresh147) | 238,422 | Politique mondiale |
-| DS2 | Political Sentiment Analysis (subhajournal) | 767 | Conflit Ukraine |
-| DS3 | US Election 2020 Tweets (manchunhui) | 1,456,644 | Election Trump/Biden |
+| # | Nom | Auteur Kaggle | Lien | Tweets | Domaine |
+|---|---|---|---|---|---|
+| DS1 | Global Political Tweets | kaushiksuresh147 | https://www.kaggle.com/datasets/kaushiksuresh147/political-tweets | 238,422 | Politique mondiale |
+| DS2 | Political Sentiment Analysis | subhajournal | https://www.kaggle.com/datasets/subhajournal/political-sentiment-analysis | 767 | Conflit Ukraine |
+| DS3 | US Election 2020 Tweets | manchunhui | https://www.kaggle.com/datasets/manchunhui/us-election-2020-tweets | 1,456,644 | Election Trump/Biden |
+
+**Total : 1,695,833 tweets apres nettoyage et deduplication**
+
+### Description des datasets
+
+**DS1 — Global Political Tweets**
+Tweets collectes via l'API Twitter entre juillet 2021 et aout 2022 avec le hashtag `#Politics`.
+Contient 13 colonnes : texte, date, hashtags, localisation, followers, source, retweet, etc.
+Licence : CC0 (domaine public).
+
+**DS2 — Political Sentiment Analysis**
+Tweets collectes sur deux jours consecutifs autour du conflit en Ukraine.
+Organise en deux sets (Set-1, Set-2) de 13 fichiers CSV chacun par hashtag :
+`#NATO`, `#SaveUkraineNow`, `#StopPutinNOW`, `#StopRussia`, `#StopTheWar`,
+`#prayforukraine`, `#russianarmy`, `#russianattack`, `#ukraineconflict`, etc.
+Contient 2 colonnes : text et user.
+
+**DS3 — US Election 2020 Tweets**
+Tweets collectes entre le 15 octobre et le 8 novembre 2020 autour de l'election presidentielle americaine.
+Deux fichiers : `hashtag_donaldtrump.csv` et `hashtag_joebiden.csv`.
+Contient 21 colonnes : tweet, created_at, likes, retweet_count, source, user_id,
+user_name, user_description, user_followers_count, city, country, lat, long, etc.
 
 ---
 
@@ -124,7 +146,7 @@ Tweets bruts (3 datasets Kaggle)
 | NLP et ML | scikit-learn, NLTK, VADER, TF-IDF |
 | MLOps | MLflow tracking + Model Registry |
 | Dashboard | Streamlit |
-| Docker | Dockerfile.api, Dockerfile.streamlit, docker-compose |
+| Docker | Dockerfile.streamlit, docker-compose |
 | GitHub | versionnement du code |
 | Environnement | Google Colab, Google Drive |
 
