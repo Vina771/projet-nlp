@@ -520,7 +520,7 @@ elif page == "Analyse en Temps Reel":
                     return "color:#566573"
 
                 st.dataframe(
-                    result_df.style.applymap(color_sent, subset=["Sentiment"]),
+                    result_df.style.map(color_sent, subset=["Sentiment"]),
                     use_container_width=True, hide_index=True
                 )
 
@@ -622,8 +622,8 @@ elif page == "Textes de Demo":
 
         st.dataframe(
             recap_df.style
-                .applymap(color_correct, subset=["Correct"])
-                .applymap(color_pred,    subset=["Predit"]),
+                .map(color_correct, subset=["Correct"])
+                .map(color_pred,    subset=["Predit"]),
             use_container_width=True, hide_index=True
         )
 
