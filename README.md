@@ -1,153 +1,138 @@
-# Projet 11 - Analyse des Discours Politiques
+# Projet 11 - Analyse des discours politiques
 
-**Master 1 IA & Data Science — INSI Madagascar**
+Auteur : Vina RAHARITSIFA - M1 I2AD, INSI
 
-Analyse de sentiment sur des tweets politiques. Modèle entraîné sur 1,695,833 tweets politiques issus de 3 datasets Kaggle.
+Analyse de sentiment sur des tweets politiques en anglais. Le modele a ete entraine sur Google Colab avec trois datasets Kaggle, puis sauvegarde dans `models/` pour servir une API FastAPI et un dashboard Streamlit.
 
----
+## Resultats
 
-## Résultats
-
-| Modele | F1 Test | Accuracy Test | CV F1 |
-|---|---|---|---|
-| **LinearSVC** | **0.8902** | **0.8904** | **0.8835** |
+| Modele | F1 test | Accuracy test | CV F1 |
+|---|---:|---:|---:|
+| LinearSVC | 0.8902 | 0.8904 | 0.8835 |
 | Logistic Regression | 0.8821 | 0.8824 | 0.8739 |
 | Naive Bayes | 0.7224 | 0.7226 | 0.7214 |
 | Random Forest | 0.6994 | 0.7021 | 0.6962 |
 | Gradient Boosting | 0.6168 | 0.6171 | 0.6153 |
 
-**Meilleur modele : LinearSVC — F1 = 0.8902**
+Meilleur modele : `LinearSVC` avec TF-IDF bigrammes, 50 000 features.
 
----
+## Donnees
 
-## Datasets
+| Dataset | Source | Tweets apres nettoyage |
+|---|---|---:|
+| DS1 - Global Political Tweets | Kaggle, kaushiksuresh147 | 238 422 |
+| DS2 - Political Sentiment Analysis | Kaggle, subhajournal | 767 |
+| DS3 - US Election 2020 Tweets | Kaggle, manchunhui | 1 456 644 |
 
-| # | Nom | Auteur Kaggle | Lien | Tweets | Domaine |
-|---|---|---|---|---|---|
-| DS1 | Global Political Tweets | kaushiksuresh147 | https://www.kaggle.com/datasets/kaushiksuresh147/political-tweets | 238,422 | Politique mondiale |
-| DS2 | Political Sentiment Analysis | subhajournal | https://www.kaggle.com/datasets/subhajournal/political-sentiment-analysis | 767 | Conflit Ukraine |
-| DS3 | US Election 2020 Tweets | manchunhui | https://www.kaggle.com/datasets/manchunhui/us-election-2020-tweets | 1,456,644 | Election Trump/Biden |
+Total preprocessing : 1 695 833 tweets.  
+Total utilise pour la modelisation apres filtrage et echantillonnage stratifie : 600 000 tweets.
 
-**Total : 1,695,833 tweets apres nettoyage et deduplication**
+## Structure
 
-### Description des datasets
-
-**DS1 — Global Political Tweets**
-Tweets collectes via l'API Twitter entre juillet 2021 et aout 2022 avec le hashtag `#Politics`.
-Contient 13 colonnes : texte, date, hashtags, localisation, followers, source, retweet, etc.
-Licence : CC0 (domaine public).
-
-**DS2 — Political Sentiment Analysis**
-Tweets collectes sur deux jours consecutifs autour du conflit en Ukraine.
-Organise en deux sets (Set-1, Set-2) de 13 fichiers CSV chacun par hashtag :
-`#NATO`, `#SaveUkraineNow`, `#StopPutinNOW`, `#StopRussia`, `#StopTheWar`,
-`#prayforukraine`, `#russianarmy`, `#russianattack`, `#ukraineconflict`, etc.
-Contient 2 colonnes : text et user.
-
-**DS3 — US Election 2020 Tweets**
-Tweets collectes entre le 15 octobre et le 8 novembre 2020 autour de l'election presidentielle americaine.
-Deux fichiers : `hashtag_donaldtrump.csv` et `hashtag_joebiden.csv`.
-Contient 21 colonnes : tweet, created_at, likes, retweet_count, source, user_id,
-user_name, user_description, user_followers_count, city, country, lat, long, etc.
-
----
-
-## Architecture
-
-```
+```text
 NLP_Projet/
-    DS1/ DS2/ DS3/                    donnees brutes (non versionnees)
-    outputs/                          CSV nettoyes (non versionnes)
-    models/
-        best_model.pkl                LinearSVC entraine
-        tfidf_vectorizer.pkl          TF-IDF bigrammes 50k features
-    reports/
-        comparaison_modeles.png       graphiques des 5 modeles
-        rapport_modelisation.txt      metriques detaillees
-        comparaison_modeles.csv       tableau comparatif
-    mlruns/                           runs MLflow (non versionnes)
-    app_streamlit.py                  Dashboard Streamlit
-    setup_models.py                   telechargement auto du modele
-    Dockerfile.streamlit              image Docker Streamlit
-    docker-compose.yml                build local
-    docker-compose.hub.yml            pull depuis Docker Hub
-    requirements.txt                  dependances Python
-    deploy.ps1                        script build + push + GitHub
+  src/nlp_project/              code partage API / preprocessing inference
+  tests/                        tests pytest
+  models/                       modele et vectoriseur sauvegardes
+  reports/                      rapports, figures et captures de livraison
+  outputs/                      sorties locales du preprocessing
+  projet11_pipeline.ipynb       notebook d'exploration / preprocessing Colab
+  projet11_modelisation.ipynb   notebook de modelisation Colab
+  app_streamlit.py              dashboard Streamlit connecte a l'API FastAPI via API_URL
+  Dockerfile.api                image quantumspider777/projetnlp-api
+  Dockerfile.streamlit          image quantumspider777/projetnlp-streamlit
+  docker-compose.yml            lancement local API + Streamlit + MLflow
+  docker-compose.hub.yml        lancement depuis images Docker Hub
 ```
 
----
+Les donnees brutes et les gros CSV intermediaires ne sont pas versionnes.
 
-## Lancement rapide
-
-### Option 1 — Venv local (recommande pour le developpement)
+## Lancement local
 
 ```powershell
-# Setup unique : cree le venv + installe tout + ressources NLTK
 powershell -ExecutionPolicy Bypass -File setup_venv.ps1
-
-# Ensuite ouvrir 2 terminaux dans NLP_Projet/
-
-# Terminal 1 - Dashboard Streamlit
-venv\Scripts\streamlit run app_streamlit.py
-
-# Terminal 2 - MLflow UI
-venv\Scripts\mlflow ui --backend-store-uri ./mlruns
+venv\Scripts\activate
 ```
 
-### Option 2 — Docker Hub (aucun build, aucune installation Python)
+API FastAPI :
 
-```bash
-docker-compose -f docker-compose.hub.yml up
+```powershell
+uvicorn src.nlp_project.api:app --reload
 ```
 
-### Option 3 — Docker build local
+Dashboard Streamlit seul, avec fallback modele local :
+
+```powershell
+streamlit run app_streamlit.py
+```
+
+Dashboard Streamlit connecte a l'API :
+
+```powershell
+$env:API_URL="http://localhost:8000"
+streamlit run app_streamlit.py
+```
+
+MLflow :
+
+```powershell
+mlflow ui --backend-store-uri ./mlruns
+```
+
+URLs :
+
+| Service | URL |
+|---|---|
+| API | http://localhost:8000 |
+| Documentation API | http://localhost:8000/docs |
+| Streamlit | http://localhost:8501 |
+| MLflow | http://localhost:5000 |
+
+## Docker
+
+Build local :
 
 ```bash
 docker-compose up --build
 ```
 
-**Services :**
-
-| Service | URL |
-|---|---|
-| Dashboard Streamlit | http://localhost:8501 |
-| MLflow UI | http://localhost:5000 |
-
----
-
-## Images Docker Hub
+Images Docker Hub deja preparees :
 
 ```bash
-docker pull quantumspider777/projet11-streamlit:latest
+docker-compose -f docker-compose.hub.yml up
 ```
 
----
+## Tests
 
-## Pipeline complet
-
-```
-Tweets bruts (3 datasets Kaggle)
-    -> Nettoyage : URLs, mentions, hashtags, emojis
-    -> Tokenisation + Stopwords + Lemmatisation (NLTK)
-    -> Labellisation automatique VADER
-    -> TF-IDF bigrammes (50 000 features)
-    -> 5 classifieurs entraines + Cross-Validation 5-fold
-    -> Tracking MLflow + Model Registry
-    -> Meilleur modele : LinearSVC (F1 = 0.8902)
-    -> Dashboard Streamlit + Docker
+```powershell
+pytest
 ```
 
----
+## Livrables
 
-## Technologies
-
-| Categorie | Outils |
+| Livrable | Emplacement |
 |---|---|
-| NLP et ML | scikit-learn, NLTK, VADER, TF-IDF |
-| MLOps | MLflow tracking + Model Registry |
-| Dashboard | Streamlit |
-| Docker | Dockerfile.streamlit, docker-compose |
-| GitHub | versionnement du code |
-| Environnement | Google Colab, Google Drive |
+| Repository GitHub complet | depot du projet |
+| README clair | `README.md` |
+| Notebook d'exploration | `projet11_pipeline.ipynb` |
+| Code organise dans `src/` | `src/nlp_project/` |
+| Modele sauvegarde | `models/best_model.pkl`, `models/tfidf_vectorizer.pkl` |
+| API fonctionnelle | `src/nlp_project/api.py` |
+| Tests pytest | `tests/` |
+| Capture MLflow | `reports/captures/mlflow.png` |
+| Capture FastAPI `/docs` | `reports/captures/fastapi_docs.png` |
+| Rapport court Word | `reports/rapport_court_projet11.docx` |
 
----
+## Pipeline
+
+```text
+Tweets bruts
+  -> nettoyage, deduplication, suppression RT
+  -> tokenisation, stopwords, lemmatisation
+  -> labellisation VADER
+  -> TF-IDF bigrammes
+  -> comparaison de 5 modeles
+  -> tracking MLflow
+  -> sauvegarde LinearSVC + vectoriseur
+  -> API FastAPI et dashboard Streamlit
+```

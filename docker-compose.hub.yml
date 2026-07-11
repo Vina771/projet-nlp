@@ -2,9 +2,6 @@ version: "3.9"
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
     image: quantumspider777/projetnlp-api:latest
     container_name: projetnlp_api
     ports:
@@ -22,9 +19,6 @@ services:
       retries: 3
       start_period: 10s
   streamlit:
-    build:
-      context: .
-      dockerfile: Dockerfile.streamlit
     image: quantumspider777/projetnlp-streamlit:latest
     container_name: projetnlp_streamlit
     ports:

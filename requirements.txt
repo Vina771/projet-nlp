@@ -11,3 +11,8 @@ wordcloud
 imbalanced-learn
 streamlit
 gdown
+fastapi
+uvicorn[standard]
+pytest
+httpx
+requests

@@ -1,0 +1,12 @@
+.git
+venv
+.venv
+env
+__pycache__
+*.pyc
+DS1
+DS2
+DS3
+outputs/*.csv
+mlruns
+.ipynb_checkpoints

@@ -18,8 +18,6 @@ nltk.download('wordnet', quiet=True); \
 nltk.download('omw-1.4', quiet=True)"
 
 COPY app_streamlit.py .
-COPY models/ ./models/
-COPY outputs/ ./outputs/
 COPY reports/ ./reports/
 
 EXPOSE 8501
@@ -31,4 +29,3 @@ CMD ["streamlit", "run", "app_streamlit.py", \
      "--server.port=8501", \
      "--server.address=0.0.0.0", \
      "--server.headless=true"]
-

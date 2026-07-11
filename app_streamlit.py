@@ -1,13 +1,9 @@
-"""
+﻿"""
 Projet 11 - Analyse des Discours Politiques
-Dashboard Streamlit - Version sans donnees CSV
-Fonctionne uniquement avec best_model.pkl + tfidf_vectorizer.pkl
-Master 1 IA and Data Science - INSI Madagascar
-
-Lancement :
-    streamlit run app_streamlit.py
+Auteur : Vina RAHARITSIFA - M1 I2AD, INSI
 """
 
+import os
 import re
 import joblib
 import numpy as np
@@ -15,15 +11,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import nltk
+import requests
 from pathlib import Path
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 
-# Telechargement automatique du modele si absent (Streamlit Cloud)
+API_URL = os.getenv("API_URL", "").rstrip("/")
+
 try:
     from setup_models import download_models
-    download_models()
+    if not API_URL:
+        download_models()
 except Exception:
     pass
 
@@ -31,13 +30,10 @@ for r in ["punkt", "stopwords", "wordnet", "omw-1.4", "punkt_tab"]:
     nltk.download(r, quiet=True)
 
 
-# =============================================================
-# CONFIG
-# =============================================================
 
 st.set_page_config(
     page_title="Projet 11 - Sentiment Analysis",
-    page_icon="🗳️",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -61,9 +57,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# =============================================================
-# CHEMINS
-# =============================================================
 
 BASE_DIR    = Path(".")
 MODELS_DIR  = BASE_DIR / "models"
@@ -74,9 +67,6 @@ REPORT_CSV  = REPORTS_DIR / "comparaison_modeles.csv"
 REPORT_TXT  = REPORTS_DIR / "rapport_modelisation.txt"
 
 
-# =============================================================
-# PREPROCESSING
-# =============================================================
 
 lemmatizer = WordNetLemmatizer()
 STOP_WORDS  = set(stopwords.words("english")) - {
@@ -126,8 +116,7 @@ def predict(text, model, tfidf):
     pred = model.predict(vec)[0]
     label = LABEL_NAMES[pred]
 
-    # LinearSVC n'a pas predict_proba — on utilise decision_function
-    # et on convertit via softmax pour obtenir un score entre 0 et 1
+    # LinearSVC n'a pas predict_proba : conversion des marges via softmax.
     if hasattr(model, "predict_proba"):
         score = float(model.predict_proba(vec)[0][pred])
     elif hasattr(model, "decision_function"):
@@ -144,10 +133,45 @@ def predict(text, model, tfidf):
     return label, score, tokens
 
 
-# =============================================================
-# DONNEES FIGEES DES RESULTATS D'ENTRAINEMENT
-# (issues du notebook Colab - pas besoin des CSV)
-# =============================================================
+@st.cache_data(ttl=30, show_spinner=False)
+def api_available(api_url):
+    if not api_url:
+        return False
+    try:
+        response = requests.get(f"{api_url}/health", timeout=2)
+        return response.ok
+    except requests.RequestException:
+        return False
+
+
+def predict_api(text):
+    response = requests.post(f"{API_URL}/predict", json={"text": text}, timeout=10)
+    response.raise_for_status()
+    result = response.json()
+    return result["label"], float(result["score"]), result["tokens"]
+
+
+def predict_batch_api(texts):
+    response = requests.post(f"{API_URL}/predict/batch", json={"texts": texts}, timeout=20)
+    response.raise_for_status()
+    return [
+        (item["label"], float(item["score"]), item["tokens"])
+        for item in response.json()
+    ]
+
+
+def predict_project(text, model, tfidf):
+    if API_READY:
+        return predict_api(text)
+    return predict(text, model, tfidf)
+
+
+def predict_batch_project(texts, model, tfidf):
+    if API_READY:
+        return predict_batch_api(texts)
+    return [predict(text, model, tfidf) for text in texts]
+
+
 
 TRAINING_RESULTS = {
     "LinearSVC":          {"F1 (Val)": 0.8897, "F1 (Test)": 0.8902, "Accuracy (Test)": 0.8904, "CV F1 Moy": 0.8835, "CV F1 Std": 0.0021, "Temps (s)": 12.3},
@@ -176,16 +200,12 @@ DEMO_TEXTS = {
 }
 
 
-# =============================================================
-# CHARGEMENT
-# =============================================================
 
-model, tfidf = load_model()
+API_READY = api_available(API_URL)
+model, tfidf = (None, None) if API_READY else load_model()
+INFERENCE_READY = API_READY or (model is not None and tfidf is not None)
 
 
-# =============================================================
-# SIDEBAR
-# =============================================================
 
 with st.sidebar:
     st.title("Navigation")
@@ -201,7 +221,10 @@ with st.sidebar:
         label_visibility="collapsed"
     )
     st.markdown("---")
-    if model is not None:
+    if API_READY:
+        st.success("API FastAPI connectee")
+        st.caption(API_URL)
+    elif model is not None:
         st.success("Modele charge")
         st.caption(f"Type : {type(model).__name__}")
         st.caption(f"Vocabulaire : {len(tfidf.vocabulary_):,} features")
@@ -209,13 +232,10 @@ with st.sidebar:
         st.error("Modele non charge")
         st.caption("Placez best_model.pkl et tfidf_vectorizer.pkl dans models/")
     st.markdown("---")
-    st.caption("Projet 11 - INSI Madagascar")
+    st.caption("Vina RAHARITSIFA - M1 I2AD, INSI")
     st.caption("LinearSVC | F1 = 0.8902")
 
 
-# =============================================================
-# PAGE 1 - RESULTATS DES MODELES
-# =============================================================
 
 if page == "Resultats des Modeles":
 
@@ -223,7 +243,6 @@ if page == "Resultats des Modeles":
     st.markdown("5 modeles entraines et compares sur 600 000 tweets (echantillon stratifie)")
     st.markdown("---")
 
-    # Charger depuis CSV si dispo, sinon utiliser les donnees figees
     if REPORT_CSV.exists():
         comp_df = pd.read_csv(REPORT_CSV, index_col=0)
     else:
@@ -231,7 +250,6 @@ if page == "Resultats des Modeles":
 
     comp_df = comp_df.sort_values("F1 (Test)", ascending=False)
 
-    # Tableau
     st.markdown('<p class="section-title">Tableau Comparatif</p>', unsafe_allow_html=True)
     styled = comp_df[["F1 (Val)", "F1 (Test)", "Accuracy (Test)", "CV F1 Moy", "CV F1 Std", "Temps (s)"]].style \
         .highlight_max(subset=["F1 (Test)", "Accuracy (Test)", "CV F1 Moy"], color="#d5f5e3") \
@@ -243,7 +261,6 @@ if page == "Resultats des Modeles":
     st.markdown("---")
     col1, col2 = st.columns(2)
 
-    # F1 Test par modele
     with col1:
         st.markdown('<p class="section-title">F1 Score par modele (Test)</p>', unsafe_allow_html=True)
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -261,7 +278,6 @@ if page == "Resultats des Modeles":
         st.pyplot(fig)
         plt.close()
 
-    # Cross-Validation
     with col2:
         st.markdown('<p class="section-title">Cross-Validation 5-Fold</p>', unsafe_allow_html=True)
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -280,7 +296,6 @@ if page == "Resultats des Modeles":
         st.pyplot(fig)
         plt.close()
 
-    # Val vs Test
     st.markdown("---")
     st.markdown('<p class="section-title">Validation vs Test</p>', unsafe_allow_html=True)
     fig, ax = plt.subplots(figsize=(10, 4))
@@ -292,7 +307,7 @@ if page == "Resultats des Modeles":
     ax.set_xticklabels([n.replace(" ", "\n") for n in comp_df.index], fontsize=9)
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("F1 Score (weighted)")
-    ax.set_title("Comparaison F1 Validation vs Test — pas d'overfitting")
+    ax.set_title("Comparaison F1 Validation vs Test - pas d'overfitting")
     ax.legend()
     for i, (v, t) in enumerate(zip(comp_df["F1 (Val)"], comp_df["F1 (Test)"])):
         ax.text(i - w/2, v + 0.01, f"{v:.3f}", ha="center", fontsize=7)
@@ -301,7 +316,6 @@ if page == "Resultats des Modeles":
     st.pyplot(fig)
     plt.close()
 
-    # Temps d'entrainement
     st.markdown("---")
     st.markdown('<p class="section-title">Temps d entrainement</p>', unsafe_allow_html=True)
     fig, ax = plt.subplots(figsize=(10, 3))
@@ -318,7 +332,6 @@ if page == "Resultats des Modeles":
     st.pyplot(fig)
     plt.close()
 
-    # Rapport texte
     if REPORT_TXT.exists():
         st.markdown("---")
         with st.expander("Voir le rapport de classification complet"):
@@ -326,9 +339,6 @@ if page == "Resultats des Modeles":
                 st.text(f.read())
 
 
-# =============================================================
-# PAGE 2 - STATISTIQUES DATASET
-# =============================================================
 
 elif page == "Statistiques Dataset":
 
@@ -336,7 +346,6 @@ elif page == "Statistiques Dataset":
     st.markdown("Donnees issues du pipeline de preprocessing execute sur Google Colab.")
     st.markdown("---")
 
-    # Metriques globales
     total = sum(v["tweets"] for v in DATASET_STATS.values())
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total tweets", f"{total:,}")
@@ -347,7 +356,6 @@ elif page == "Statistiques Dataset":
     st.markdown("---")
     col_a, col_b = st.columns(2)
 
-    # Distribution sentiment par dataset
     with col_a:
         st.markdown('<p class="section-title">Sentiment par Dataset (%)</p>', unsafe_allow_html=True)
         labels  = [k.split(" - ")[0] for k in DATASET_STATS]
@@ -371,7 +379,6 @@ elif page == "Statistiques Dataset":
         st.pyplot(fig)
         plt.close()
 
-    # Taille des datasets (donut)
     with col_b:
         st.markdown('<p class="section-title">Taille des Datasets</p>', unsafe_allow_html=True)
         sizes  = [v["tweets"] for v in DATASET_STATS.values()]
@@ -391,7 +398,6 @@ elif page == "Statistiques Dataset":
         st.pyplot(fig)
         plt.close()
 
-    # Pipeline resume
     st.markdown("---")
     st.markdown('<p class="section-title">Resume du Pipeline de Preprocessing</p>', unsafe_allow_html=True)
 
@@ -443,9 +449,6 @@ elif page == "Statistiques Dataset":
     st.dataframe(pd.DataFrame(tfidf_params), use_container_width=True, hide_index=True)
 
 
-# =============================================================
-# PAGE 3 - ANALYSE EN TEMPS REEL
-# =============================================================
 
 elif page == "Analyse en Temps Reel":
 
@@ -453,13 +456,12 @@ elif page == "Analyse en Temps Reel":
     st.markdown("Entrez un texte politique en anglais pour obtenir sa classification.")
     st.markdown("---")
 
-    if model is None or tfidf is None:
+    if not INFERENCE_READY:
         st.error(
-            "Modele non charge. "
-            "Placez best_model.pkl et tfidf_vectorizer.pkl dans le dossier models/."
+            "Inference indisponible. Lancez l'API FastAPI ou placez "
+            "best_model.pkl et tfidf_vectorizer.pkl dans le dossier models/."
         )
     else:
-        # --- Texte unique ---
         st.markdown('<p class="section-title">Analyse d un texte</p>', unsafe_allow_html=True)
 
         user_input = st.text_area(
@@ -471,7 +473,7 @@ elif page == "Analyse en Temps Reel":
 
         if st.button("Analyser", type="primary", use_container_width=True):
             if user_input.strip():
-                label, score, tokens = predict(user_input, model, tfidf)
+                label, score, tokens = predict_project(user_input, model, tfidf)
 
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
@@ -489,7 +491,6 @@ elif page == "Analyse en Temps Reel":
             else:
                 st.warning("Veuillez entrer un texte.")
 
-        # --- Batch ---
         st.markdown("---")
         st.markdown('<p class="section-title">Analyse de plusieurs textes</p>', unsafe_allow_html=True)
 
@@ -508,8 +509,8 @@ elif page == "Analyse en Temps Reel":
             lines = [l.strip() for l in multi_input.split("\n") if l.strip()]
             if lines:
                 rows = []
-                for line in lines:
-                    lbl, scr, _ = predict(line, model, tfidf)
+                predictions = predict_batch_project(lines, model, tfidf)
+                for line, (lbl, scr, _) in zip(lines, predictions):
                     rows.append({"Texte": line[:90] + ("..." if len(line) > 90 else ""),
                                  "Sentiment": lbl.capitalize(), "Score": round(scr, 3)})
                 result_df = pd.DataFrame(rows)
@@ -547,9 +548,6 @@ elif page == "Analyse en Temps Reel":
                 st.warning("Veuillez entrer au moins un texte.")
 
 
-# =============================================================
-# PAGE 4 - TEXTES DE DEMO
-# =============================================================
 
 elif page == "Textes de Demo":
 
@@ -560,16 +558,14 @@ elif page == "Textes de Demo":
     )
     st.markdown("---")
 
-    if model is None or tfidf is None:
-        st.error("Modele non charge. Placez best_model.pkl et tfidf_vectorizer.pkl dans models/.")
+    if not INFERENCE_READY:
+        st.error("Inference indisponible. Lancez l'API FastAPI ou placez le modele dans models/.")
     else:
-        # Analyser tous les textes de demo d'un coup
         demo_results = {}
-        for titre, texte in DEMO_TEXTS.items():
-            lbl, scr, tokens = predict(texte, model, tfidf)
+        demo_predictions = predict_batch_project(list(DEMO_TEXTS.values()), model, tfidf)
+        for (titre, texte), (lbl, scr, tokens) in zip(DEMO_TEXTS.items(), demo_predictions):
             demo_results[titre] = {"texte": texte, "label": lbl, "score": scr, "tokens": tokens}
 
-        # Afficher par groupe
         groups = {
             "Textes Positifs":  [k for k in DEMO_TEXTS if k.startswith("Positif")],
             "Textes Negatifs":  [k for k in DEMO_TEXTS if k.startswith("Negatif")],
@@ -584,7 +580,7 @@ elif page == "Textes de Demo":
                 emoji = "POSITIF" if lbl == "positive" else "NEGATIF" if lbl == "negative" else "NEUTRE"
                 badge_color = {"positive": "#2ecc71", "negative": "#e74c3c", "neutral": "#95a5a6"}[lbl]
 
-                with st.expander(f"{key.split(' - ')[1]}  —  prediction : {emoji}"):
+                with st.expander(f"{key.split(' - ')[1]} - prediction : {emoji}"):
                     st.markdown(f"**Texte :**")
                     st.markdown(f"> {r['texte']}")
                     st.markdown("")
@@ -599,7 +595,6 @@ elif page == "Textes de Demo":
                         st.markdown(f"**Tokens :** `{r['tokens'][:80]}...`")
             st.markdown("")
 
-        # Tableau recapitulatif
         st.markdown("---")
         st.markdown('<p class="section-title">Tableau Recapitulatif</p>', unsafe_allow_html=True)
         recap_rows = []
@@ -632,9 +627,6 @@ elif page == "Textes de Demo":
         st.metric("Precision sur les textes de demo", f"{correct}/{total_d}", f"{correct/total_d*100:.0f}%")
 
 
-# =============================================================
-# PAGE 5 - A PROPOS
-# =============================================================
 
 elif page == "A propos du Projet":
 
@@ -646,7 +638,7 @@ elif page == "A propos du Projet":
     with col1:
         st.markdown('<p class="section-title">Contexte</p>', unsafe_allow_html=True)
         st.markdown("""
-**Niveau :** Master 1 IA & Data Science — INSI Madagascar
+**Auteur :** Vina RAHARITSIFA - M1 I2AD, INSI
 
 **Objectif :** Analyser le sentiment des discours politiques sur Twitter
 pour classer automatiquement les tweets en : Positif, Neutre, Negatif.

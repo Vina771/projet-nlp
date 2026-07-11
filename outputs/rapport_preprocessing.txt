@@ -1,0 +1,37 @@
+PROJET 11 - RAPPORT DE PRETRAITEMENT
+Généré le : 2026-06-22 10:07:31
+
+[DS1] Global Political Tweets
+  Lignes finales  : 238,422
+  Colonnes        : ['tweet', 'tweet_clean', 'tweet_tokens', 'tweet_length', 'sentiment_label', 'sentiment_score', 'source_dataset', 'created_at']
+  Sentiment :
+sentiment_label
+positive    95969
+negative    79817
+neutral     62636
+
+[DS2] Political Sentiment Analysis Ukraine
+  Lignes finales  : 767
+  Colonnes        : ['tweet', 'tweet_clean', 'tweet_tokens', 'tweet_length', 'sentiment_label', 'sentiment_score', 'source_dataset']
+  Sentiment :
+sentiment_label
+neutral     364
+negative    257
+positive    146
+
+[DS3] US Election 2020 Tweets
+  Lignes finales  : 1,456,644
+  Colonnes        : ['tweet', 'tweet_clean', 'tweet_tokens', 'tweet_length', 'sentiment_label', 'sentiment_score', 'source_dataset', 'created_at']
+  Sentiment :
+sentiment_label
+neutral     554207
+positive    485892
+negative    416545
+
+[FUSION TOTALE] 1,695,833 tweets
+
+[FICHIERS EXPORTÉS DANS DRIVE]
+  ds1_global_political_clean.csv (122.5 MB)
+  ds2_ukraine_conflict_clean.csv (0.2 MB)
+  ds3_us_election_2020_clean.csv (663.8 MB)
+  dataset_fusionne_complet.csv (786.6 MB)

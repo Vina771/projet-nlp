@@ -1,39 +1,28 @@
-@"
-# Donnees brutes
+# Donnees brutes et fichiers volumineux
 DS1/
 DS2/
 DS3/
-
-# CSV nettoyés
 outputs/*.csv
-
-# Modeles
-models/*.pkl
-models/*.joblib
-
-# MLflow
 mlruns/
 
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
+# Environnements Python
 venv/
 .venv/
 env/
+__pycache__/
+*.py[cod]
+*.pyo
 
 # Jupyter
 .ipynb_checkpoints/
 
-# IDE
+# IDE / OS
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Env
+# Secrets locaux
 .env
-"@ | Out-File -FilePath .gitignore -Encoding utf8
+tmp_render/

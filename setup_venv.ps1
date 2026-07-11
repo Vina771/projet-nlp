@@ -1,24 +1,7 @@
-# =============================================================
-# Projet 11 - Setup environnement virtuel Python (Windows)
-#
-# UTILISATION :
-#   cd C:\Users\Vina\Documents\NLP_Projet
-#   powershell -ExecutionPolicy Bypass -File setup_venv.ps1
-#
-# Ce script :
-#   1. Cree un venv Python dans NLP_Projet/venv/
-#   2. Installe toutes les dependances depuis requirements.txt
-#   3. Telecharge les ressources NLTK necessaires
-#   4. Affiche les commandes pour lancer les services
-# =============================================================
-
 Write-Host ""
 Write-Host "Projet 11 - Setup environnement virtuel" -ForegroundColor Cyan
 Write-Host ""
 
-# =============================================================
-# 1. Verifier Python
-# =============================================================
 Write-Host "[1/4] Verification de Python..." -ForegroundColor Yellow
 
 try {
@@ -30,9 +13,6 @@ try {
     exit 1
 }
 
-# =============================================================
-# 2. Creer le venv
-# =============================================================
 Write-Host ""
 Write-Host "[2/4] Creation du venv..." -ForegroundColor Yellow
 
@@ -47,9 +27,6 @@ if (Test-Path "venv") {
     Write-Host "  venv/ cree" -ForegroundColor Green
 }
 
-# =============================================================
-# 3. Installer les dependances
-# =============================================================
 Write-Host ""
 Write-Host "[3/4] Installation des dependances..." -ForegroundColor Yellow
 
@@ -62,9 +39,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "  Toutes les dependances installees" -ForegroundColor Green
 
-# =============================================================
-# 4. Telecharger les ressources NLTK
-# =============================================================
 Write-Host ""
 Write-Host "[4/4] Telechargement des ressources NLTK..." -ForegroundColor Yellow
 
@@ -76,9 +50,6 @@ print('Ressources NLTK OK')
 "
 Write-Host "  NLTK OK" -ForegroundColor Green
 
-# =============================================================
-# Recapitulatif
-# =============================================================
 Write-Host ""
 Write-Host "Setup termine !" -ForegroundColor Green
 Write-Host ""
@@ -90,6 +61,10 @@ Write-Host ""
 Write-Host "  Dashboard Streamlit (Terminal 1) :"
 Write-Host "    venv\Scripts\streamlit run app_streamlit.py" -ForegroundColor White
 Write-Host "    -> http://localhost:8501"
+Write-Host ""
+Write-Host "  API FastAPI (Terminal 2) :"
+Write-Host "    venv\Scripts\uvicorn src.nlp_project.api:app --reload" -ForegroundColor White
+Write-Host "    -> http://localhost:8000/docs"
 Write-Host ""
 Write-Host "  MLflow UI (Terminal 3) :"
 Write-Host "    venv\Scripts\mlflow ui --backend-store-uri ./mlruns" -ForegroundColor White

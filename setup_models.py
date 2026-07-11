@@ -1,13 +1,10 @@
 """
-Projet 11 - Telechargement automatique du modele
-Ce fichier est execute au demarrage de l'app Streamlit
-Il telecharge best_model.pkl et tfidf_vectorizer.pkl depuis Google Drive
+Telechargement automatique des artefacts du modele.
 """
 
 import os
 from pathlib import Path
 
-# Uniquement l'ID, pas le lien complet
 MODEL_FILE_ID = "1Uz5OWnaq0YNuB-sPX54HKsYa-Cyx_A-h"
 TFIDF_FILE_ID = "1enUkbrp1GeLTREt9i0LDBhlfl8wpszJY"
 
