@@ -63,8 +63,8 @@ Write-Host "    venv\Scripts\streamlit run app_streamlit.py" -ForegroundColor Wh
 Write-Host "    -> http://localhost:8501"
 Write-Host ""
 Write-Host "  API FastAPI (Terminal 2) :"
-Write-Host "    venv\Scripts\uvicorn src.nlp_project.api:app --reload" -ForegroundColor White
-Write-Host "    -> http://localhost:8000/docs"
+Write-Host "    venv\Scripts\uvicorn src.nlp_project.api:app --reload --port 8001" -ForegroundColor White
+Write-Host "    -> http://localhost:8001/docs"
 Write-Host ""
 Write-Host "  MLflow UI (Terminal 3) :"
 Write-Host "    venv\Scripts\mlflow ui --backend-store-uri ./mlruns" -ForegroundColor White

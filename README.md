@@ -58,7 +58,7 @@ venv\Scripts\activate
 API FastAPI :
 
 ```powershell
-uvicorn src.nlp_project.api:app --reload
+uvicorn src.nlp_project.api:app --reload --port 8001
 ```
 
 Dashboard Streamlit seul, avec fallback modele local :
@@ -70,7 +70,7 @@ streamlit run app_streamlit.py
 Dashboard Streamlit connecte a l'API :
 
 ```powershell
-$env:API_URL="http://localhost:8000"
+$env:API_URL="http://localhost:8001"
 streamlit run app_streamlit.py
 ```
 
@@ -84,8 +84,8 @@ URLs :
 
 | Service | URL |
 |---|---|
-| API | http://localhost:8000 |
-| Documentation API | http://localhost:8000/docs |
+| API | http://localhost:8001 |
+| Documentation API | http://localhost:8001/docs |
 | Streamlit | http://localhost:8501 |
 | MLflow | http://localhost:5000 |
 
@@ -96,6 +96,8 @@ Build local :
 ```bash
 docker-compose up --build
 ```
+
+L'API est exposee sur `http://localhost:8001` pour eviter les conflits avec un autre service deja lance sur le port `8000`. Dans Docker, Streamlit continue a appeler l'API via `http://api:8000` sur le reseau interne.
 
 Images Docker Hub deja preparees :
 
