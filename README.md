@@ -36,8 +36,9 @@ NLP_Projet/
   models/                       modele et vectoriseur sauvegardes
   reports/                      rapports, figures et captures de livraison
   outputs/                      sorties locales du preprocessing
-  projet11_pipeline.ipynb       notebook d'exploration / preprocessing Colab
-  projet11_modelisation.ipynb   notebook de modelisation Colab
+  notebooks/
+    projet11_pipeline.ipynb       notebook d'exploration / preprocessing Colab
+    projet11_modelisation.ipynb   notebook de modelisation Colab
   app_streamlit.py              dashboard Streamlit connecte a l'API FastAPI via API_URL
   Dockerfile.api                image quantumspider777/projetnlp-api
   Dockerfile.streamlit          image quantumspider777/projetnlp-streamlit
@@ -114,14 +115,14 @@ pytest
 |---|---|
 | Repository GitHub complet | depot du projet |
 | README clair | `README.md` |
-| Notebook d'exploration | `projet11_pipeline.ipynb` |
+| Notebook d'exploration | `notebooks/projet11_pipeline.ipynb` |
 | Code organise dans `src/` | `src/nlp_project/` |
 | Modele sauvegarde | `models/best_model.pkl`, `models/tfidf_vectorizer.pkl` |
 | API fonctionnelle | `src/nlp_project/api.py` |
 | Tests pytest | `tests/` |
 | Capture MLflow | `reports/captures/mlflow.png` |
 | Capture FastAPI `/docs` | `reports/captures/fastapi_docs.png` |
-| Rapport court Word | `reports/rapport_court_projet11.docx` |
+| Rapport court Word | `reports/rapport_projet11.docx` |
 
 ## Pipeline
 

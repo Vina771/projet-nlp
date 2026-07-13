@@ -17,7 +17,11 @@ service = default_model()
 
 
 class PredictRequest(BaseModel):
-    text: str = Field(..., min_length=1, example="The election results show a clear victory for democracy.")
+    text: str = Field(
+        ...,
+        min_length=1,
+        json_schema_extra={"example": "The election results show a clear victory for democracy."},
+    )
 
 
 class PredictResponse(BaseModel):

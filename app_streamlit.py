@@ -13,6 +13,7 @@ import streamlit as st
 import nltk
 import requests
 from pathlib import Path
+from wordcloud import WordCloud
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
@@ -76,6 +77,11 @@ STOP_WORDS  = set(stopwords.words("english")) - {
 }
 LABEL_NAMES = ["negative", "neutral", "positive"]
 COLORS      = {"positive": "#2ecc71", "neutral": "#95a5a6", "negative": "#e74c3c"}
+EXPECTED_TO_LABEL = {"positif": "positive", "negatif": "negative", "neutre": "neutral"}
+
+
+def expected_label(value):
+    return EXPECTED_TO_LABEL.get(value.strip().lower(), value.strip().lower())
 
 
 def clean_and_tokenize(text):
@@ -170,6 +176,76 @@ def predict_batch_project(texts, model, tfidf):
     if API_READY:
         return predict_batch_api(texts)
     return [predict(text, model, tfidf) for text in texts]
+
+
+@st.cache_data(show_spinner=False)
+def load_wordcloud_text():
+    csv_paths = sorted((BASE_DIR / "outputs").glob("*_clean.csv"))
+    chunks = []
+    for path in csv_paths:
+        try:
+            sample = pd.read_csv(path, nrows=1500, low_memory=False)
+        except Exception:
+            continue
+        for column in ["tweet_tokens", "tweet_clean", "tweet"]:
+            if column in sample.columns:
+                chunks.extend(sample[column].dropna().astype(str).head(1500).tolist())
+                break
+    if chunks:
+        return " ".join(chunks)
+    return " ".join(DEMO_TEXTS.values())
+
+
+def show_wordcloud(text):
+    words = clean_and_tokenize(text)
+    if not words:
+        st.info("Nuage de mots indisponible : aucun texte exploitable.")
+        return
+    cloud = WordCloud(
+        width=1100,
+        height=420,
+        background_color="white",
+        colormap="viridis",
+        max_words=120,
+        collocations=False,
+    ).generate(words)
+    fig, ax = plt.subplots(figsize=(11, 4.2))
+    ax.imshow(cloud, interpolation="bilinear")
+    ax.axis("off")
+    st.pyplot(fig)
+    plt.close(fig)
+
+
+@st.cache_data(show_spinner=False)
+def load_dataset_stats():
+    report_path = BASE_DIR / "outputs" / "rapport_preprocessing.txt"
+    if not report_path.exists():
+        return DATASET_STATS
+
+    text = report_path.read_text(encoding="utf-8", errors="ignore")
+    pattern = re.compile(
+        r"\[(DS\d+)\]\s+([^\n]+).*?Lignes finales\s+:\s+([\d,]+).*?"
+        r"Sentiment\s+:\s*sentiment_label\s*(.*?)(?=\n\[|\Z)",
+        re.S,
+    )
+
+    stats = {}
+    for code, name, total, sentiment_block in pattern.findall(text):
+        counts = {"positive": 0, "neutral": 0, "negative": 0}
+        for label, count in re.findall(r"(positive|neutral|negative)\s+(\d+)", sentiment_block):
+            counts[label] = int(count)
+
+        tweet_count = int(total.replace(",", ""))
+        if tweet_count <= 0:
+            continue
+        stats[f"{code} - {name.strip()}"] = {
+            "tweets": tweet_count,
+            "positive": counts["positive"] / tweet_count * 100,
+            "neutral": counts["neutral"] / tweet_count * 100,
+            "negative": counts["negative"] / tweet_count * 100,
+        }
+
+    return stats or DATASET_STATS
 
 
 
@@ -346,22 +422,22 @@ elif page == "Statistiques Dataset":
     st.markdown("Donnees issues du pipeline de preprocessing execute sur Google Colab.")
     st.markdown("---")
 
-    total = sum(v["tweets"] for v in DATASET_STATS.values())
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total tweets", f"{total:,}")
-    col2.metric("DS1 - Global", f"{DATASET_STATS['DS1 - Global Political Tweets']['tweets']:,}")
-    col3.metric("DS2 - Ukraine", f"{DATASET_STATS['DS2 - Ukraine Conflict']['tweets']:,}")
-    col4.metric("DS3 - Election", f"{DATASET_STATS['DS3 - US Election 2020']['tweets']:,}")
+    dataset_stats = load_dataset_stats()
+    total = sum(v["tweets"] for v in dataset_stats.values())
+    metric_cols = st.columns(min(len(dataset_stats) + 1, 4))
+    metric_cols[0].metric("Total tweets", f"{total:,}")
+    for col, (name, values) in zip(metric_cols[1:], dataset_stats.items()):
+        col.metric(name.split(" - ")[0], f"{values['tweets']:,}")
 
     st.markdown("---")
     col_a, col_b = st.columns(2)
 
     with col_a:
         st.markdown('<p class="section-title">Sentiment par Dataset (%)</p>', unsafe_allow_html=True)
-        labels  = [k.split(" - ")[0] for k in DATASET_STATS]
-        pos_vals = [v["positive"] for v in DATASET_STATS.values()]
-        neu_vals = [v["neutral"]  for v in DATASET_STATS.values()]
-        neg_vals = [v["negative"] for v in DATASET_STATS.values()]
+        labels  = [k.split(" - ")[0] for k in dataset_stats]
+        pos_vals = [v["positive"] for v in dataset_stats.values()]
+        neu_vals = [v["neutral"]  for v in dataset_stats.values()]
+        neg_vals = [v["negative"] for v in dataset_stats.values()]
 
         x = np.arange(len(labels))
         w = 0.25
@@ -381,9 +457,10 @@ elif page == "Statistiques Dataset":
 
     with col_b:
         st.markdown('<p class="section-title">Taille des Datasets</p>', unsafe_allow_html=True)
-        sizes  = [v["tweets"] for v in DATASET_STATS.values()]
-        labels_donut = ["DS1\nGlobal\n238k", "DS2\nUkraine\n767", "DS3\nElection\n1.46M"]
-        colors_donut = ["#3498db", "#e67e22", "#9b59b6"]
+        sizes  = [v["tweets"] for v in dataset_stats.values()]
+        labels_donut = [f"{name.split(' - ')[0]}\n{values['tweets']:,}" for name, values in dataset_stats.items()]
+        base_colors = ["#3498db", "#e67e22", "#9b59b6", "#2ecc71", "#e74c3c", "#95a5a6"]
+        colors_donut = [base_colors[i % len(base_colors)] for i in range(len(sizes))]
         fig, ax = plt.subplots(figsize=(5, 4))
         wedges, texts, autotexts = ax.pie(
             sizes, labels=labels_donut, colors=colors_donut,
@@ -397,6 +474,11 @@ elif page == "Statistiques Dataset":
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
+
+    st.markdown("---")
+    st.markdown('<p class="section-title">Nuage de mots des tweets nettoyes</p>', unsafe_allow_html=True)
+    st.caption("Genere depuis un echantillon des CSV nettoyes quand ils sont disponibles, sinon depuis les textes de demonstration.")
+    show_wordcloud(load_wordcloud_text())
 
     st.markdown("---")
     st.markdown('<p class="section-title">Resume du Pipeline de Preprocessing</p>', unsafe_allow_html=True)
@@ -599,11 +681,13 @@ elif page == "Textes de Demo":
         st.markdown('<p class="section-title">Tableau Recapitulatif</p>', unsafe_allow_html=True)
         recap_rows = []
         for titre, r in demo_results.items():
+            expected = expected_label(titre.split(" - ")[0])
+            predicted = r["label"].lower()
             recap_rows.append({
                 "Titre":     titre.split(" - ")[1],
                 "Attendu":   titre.split(" - ")[0],
                 "Predit":    r["label"].capitalize(),
-                "Correct":   "Oui" if titre.split(" - ")[0].lower() in r["label"] else "Non",
+                "Correct":   "Oui" if expected == predicted else "Non",
                 "Score":     round(r["score"], 3),
             })
         recap_df = pd.DataFrame(recap_rows)

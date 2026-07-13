@@ -8,7 +8,7 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
 
-OUT = Path("reports") / "rapport_court_projet11.docx"
+OUT = Path("reports") / "rapport_projet11.docx"
 AUTHOR = "Vina RAHARITSIFA - M1 I2AD, INSI"
 
 
