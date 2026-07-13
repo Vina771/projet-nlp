@@ -146,16 +146,15 @@ Les rapports des variantes sont sauvegardes dans `reports/modelisation_variantes
 
 | Livrable | Emplacement |
 |---|---|
-| Repository GitHub complet | depot du projet |
-| README clair | `README.md` |
-| Notebook d'exploration | `notebooks/projet11_pipeline.ipynb` |
+| README  | `README.md` |
+| Notebook | `notebooks/projet11_pipeline.ipynb - projet11_modelisation.ipynb` |
 | Code organise dans `src/` | `src/nlp_project/` |
 | Modele sauvegarde | `models/best_model.pkl`, `models/tfidf_vectorizer.pkl` |
 | API fonctionnelle | `src/nlp_project/api.py` |
 | Tests pytest | `tests/` |
 | Capture MLflow | `reports/captures/mlflow.png` |
 | Capture FastAPI `/docs` | `reports/captures/fastapi_docs.png` |
-| Rapport court Word | `reports/rapport_projet11.docx` |
+| Rapport | `reports/rapport_projet11.docx` |
 
 ## Pipeline
 
