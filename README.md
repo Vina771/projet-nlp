@@ -111,6 +111,37 @@ docker-compose -f docker-compose.hub.yml up
 pytest
 ```
 
+## Modelisation avancee
+
+Le script `src/train.py` permet de relancer la modelisation avec une source de donnees configurable, sans modifier le code :
+
+```powershell
+python src/train.py --data-source "C:\chemin\dataset.csv" --sample-per-class 200000
+```
+
+Il est aussi possible d'utiliser une variable d'environnement ou un identifiant Google Drive compatible `gdown` :
+
+```powershell
+$env:DATASET_SOURCE="gdown://FILE_ID"
+python src/train.py --skip-tuning
+```
+
+Variantes implementees :
+
+- `linearsvc_baseline` : LinearSVC seul, reference actuelle.
+- `ensemble_vote_pondere` : vote pondere LinearSVC + Logistic Regression.
+- `routage_confiance` : Logistic Regression appelee seulement quand la marge LinearSVC est faible.
+- `linearsvc_tuned` : recherche sur `C` et `ngram_range`.
+
+Les runs sont traces dans MLflow avec un backend local SQLite par defaut :
+
+```powershell
+python src/train.py --data-source "C:\chemin\dataset.csv" --mlflow-uri "sqlite:///mlflow.db"
+mlflow ui --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
+```
+
+Les rapports des variantes sont sauvegardes dans `reports/modelisation_variantes/`. L'option `--export-best` remplace `models/best_model.pkl` et `models/tfidf_vectorizer.pkl` en gardant le format attendu par l'API.
+
 ## Livrables
 
 | Livrable | Emplacement |

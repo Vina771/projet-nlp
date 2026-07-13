@@ -17,6 +17,24 @@ Gradient Boosting            0.6157    0.6152           0.6171     0.6168     0.
 MEILLEUR MODELE : LinearSVC
 F1 Test         : 0.8902
 
+EXTENSION CODE - VARIANTES AVANCEES
+Un script d'entrainement reproductible a ete ajoute dans src/train.py.
+Il permet de fournir un nouveau dataset via --data-source ou DATASET_SOURCE,
+sans chemin fige dans la logique de modelisation.
+
+Variantes implementees dans le code :
+- linearsvc_baseline : reference actuelle.
+- ensemble_vote_pondere : combinaison LinearSVC + Logistic Regression,
+  avec poids plus eleve pour LinearSVC.
+- routage_confiance : LinearSVC reste le modele principal, Logistic
+  Regression intervient seulement lorsque la marge de decision est faible.
+- linearsvc_tuned : recherche sur C et ngram_range.
+
+Les runs sont logges dans MLflow avec backend SQLite local par defaut.
+Les nouveaux resultats numeriques sont produits dans
+reports/modelisation_variantes/comparaison_variantes.csv apres execution
+du script sur le dataset complet.
+
 RAPPORT CLASSIFICATION - MEILLEUR MODELE
               precision    recall  f1-score   support
 
@@ -86,4 +104,3 @@ RAPPORT - Gradient Boosting
     accuracy                           0.62     90000
    macro avg       0.64      0.62      0.62     90000
 weighted avg       0.64      0.62      0.62     90000
-
